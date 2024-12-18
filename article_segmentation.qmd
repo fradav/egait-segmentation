@@ -17,7 +17,7 @@ author:
 date: last-modified
 date-modified: last-modified
 abstract: >+
-  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur posuere vestibulum facilisis. Aenean pretium orci augue, quis lobortis libero accumsan eu. Nam mollis lorem sit amet pellentesque ullamcorper. Curabitur lobortis libero eget malesuada vestibulum. Nam nec nibh massa. Pellentesque porttitor cursus tellus. Mauris urna erat, rhoncus sed faucibus sit amet, venenatis eu ipsum.
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur posuere vestibulum facilisis. Aenean pretium orci augue, quis lobortis libero accumsan eu. Nam mollis lorem sit amet pelSlowsque ullamcorper. Curabitur lobortis libero eget malesuada vestibulum. Nam nec nibh massa. PelSlowsque porttitor cursus tellus. Mauris urna erat, rhoncus sed faucibus sit amet, venenatis eu ipsum.
 keywords: [key1, key2, key3]
 citation:
   type: article-journal
@@ -35,11 +35,59 @@ format:
   computo-html: default
   computo-pdf:
     cite-method: biblatex
+tbl-cap-location: bottom
+header-includes:
+  - \usepackage{longtable}
+  - \usepackage{hhline}
+  - \usepackage{enumitem}
 ---
 
 # Introduction
 
 ## Context
+
+### Gait analysis
+
+Study of the human gait has been shown to be important in various health applications, such as study of general health in elderly populations. Wearable sensors are increasingly used for gait analysis as they are smaller, cheaper and more convenient than other methods such as motion capture systems or mats containing pressure sensors.
+
+A walking cycle is defined as stride, which is composed of two steps. More formally, a stride is the set of movements performed between two consecutive contacts of the heel of the same foot with the ground. The goal of our method is to segment the gait as cycles to extract strides. This allows further study of the gait, like spatio-temporal parameters computation.
+
+More precisely, a stride is divided in two phases: stance phase and swing phase. The stance phase lasts generally 60% of the entire stride. Different events are happening a stride (see @fig-walking-cycle) and we will focus here on Heel-Strike which will be the segmentation marker.
+
+![Events and phases of a typical gait cycle. [^jacquelin-perry]](images/walking-cycles.png){#fig-walking-cycle width=400}
+
+[^jacquelin-perry]: Figure annotated from Jaquelin Perry's one on [Wikipedia](https://commons.wikimedia.org/wiki/File:GaitCycle_by_JaquelinPerry.jpg).
+
+### Unit quaternions
+
+Unit quaternions can be used to represent the 3D rotation of an object over time [@hamilton1844, @voight2021quaternion]. This representation has several advantages, as it with a rather compressed representation containing only four values and avoiding the gimbal lock problem present in other representations. Unit quaternions were therefore chosen as the data type returned by the sensor.
+
+Quaternions are four-dimensional vectors denoted as $\mathbf{q} = \left( q_w, q_x, q_y, q_z \right)$, but can also be viewed as hypercomplex numbers of rank 4. Unit quaternions have a norm of 1 and can encode a 3D rotation with a rotation angle $\theta \in [0, 2\pi]$ and a rotation axis $\mathbf{u} = (u_x, u_y, u_z) \in S^2$, where $S^2$ is the 2-sphere, using the following formula:
+
+$$
+\mathbf{q} = \text{cos}\left(\frac{\theta}{2}\right) + \left(u_x i + u_y j + u_z k \right) \text{sin}\left(\frac{\theta}{2}\right)
+$$ {#eq-quaternions}
+
+with :
+
+- $i$, $j$, and $k$ generalizing the imaginary number $i$, as $i^2=j^2=k^2=ijk=-1$.
+- $||\mathbf{q}|| = \sqrt{\mathbf{qq}^t} = 1$.
+
+The set of unit quaternions, denoted $\mathbb{H}_u$, possesses interesting properties. The quaternions $\mathbf{q}$ and $-\mathbf{q}$ represent the same rotation. The group is equipped with an identity element $\mathbf{q}^{(0)} = (1,0,0,0)$ which corresponds to the identity rotation, such that $\mathbf{q} \mathbf{q}^{(0)} = \mathbf{q}^{(0)}\mathbf{q} = \mathbf{q}$
+
+It is possible to use the geodesic distance $d_g$ between two quaternions $\mathbf{q}_1$ and $\mathbf{q}_2$ to define a metric space $(\mathbb{H}_u, d_g)$, with:
+
+$$
+d_g (\mathbf{q}_1, \mathbf{q}_2) = ||\text{log}(\mathbf{q}_1^{-1} \mathbf{q}_2)||
+$$ {#eq-dist-geodesique}
+
+In our case, the sensor orientation is the rotation between the reference frame of origin, here the Earth's reference frame $R_f=(f_1, f_2, f_3)$ and its own reference frame $R_s=(s_1, s_2, s_3)$ formed by the accelerometer, gyroscope, and magnetometer (see @fig-sensor-axis).
+
+![Sensor reference and axis. [@drouin2023semi]](images/sensor-axis.png){#fig-sensor-axis width=200}
+
+Therefore, the IMU return unit quaternion time-series allowing the study of the 3D hip rotation over time, as four-component vectors.
+
+
 
 ## State of the art
 
@@ -75,7 +123,112 @@ In our research, we did not find studies using a decision tree model to segment 
 
 ## Data acquisition
 
-## Data preprocessing
+A wearable sensor was used to record the hip rotation. It contains an acceleromerer, a gyroscope and a magnetometer. Subjects were wearing the sensor on their right hip (see @figure-sensor-position). The frequence of the sensor is 100Hz. With this device, the data acquired is in the form of quaternion time-series, representing the 3D rotation of the hip over time.
+
+![Sensor positionned on the right hip.](images/sensor-position.png){#fig-sensor-position width=150}
+
+
+Furthemore, during acquisitions, subjects were walking on the GAITRite© mat, the gold standard in gait analysis. It implies that subject were walking approximately 9 meters. This device gives the times where the subject touch the ground at each step thanks to pressure sensors included in the mat, meaning that these times can be used to know when the Heel-Strike event actually happened, data used to train the model.
+
+To use the two devices simultaneously, they were started at the same time by the same person, allowing a good synchronization between devices.
+
+Six subjects have been included in this study, with different walking speed (see @tbl-subjects). 
+
+<!-- +-----+--------+-------+-------------------------+ -->
+<!-- | ID  | Gender | Age   | Speed (cm/s)            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | MBA | M      | 50-60 | - Slow : 60             | -->
+<!-- |     |        |       | - Intermediate : 116    | -->
+<!-- |     |        |       | - Normal : 145          | -->
+<!-- |     |        |       | - Fast : 199            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | MBO | F      | 20-30 | - Slow : 73             | -->
+<!-- |     |        |       | - Intermediate : 122    | -->
+<!-- |     |        |       | - Normal : 145          | -->
+<!-- |     |        |       | - Fast : 188            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | MSI | F      | 20-30 | - Slow : 67             | -->
+<!-- |     |        |       | - Intermediate : 115    | -->
+<!-- |     |        |       | - Normal : 148          | -->
+<!-- |     |        |       | - Fast : 179            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | MTR | M      | 20-30 | - Slow : 77             | -->
+<!-- |     |        |       | - Normal : 132          | -->
+<!-- |     |        |       | - Fast : 185            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | NNE | F      | 20-30 | - Slow :  57            | -->
+<!-- |     |        |       | - Intermediate : 116    | -->
+<!-- |     |        |       | - Normal : 147          | -->
+<!-- |     |        |       | - Fast : 190            | -->
+<!-- +=====+========+=======+=========================+ -->
+<!-- | TDE | M      | 50-60 | - Slow : 61             | -->
+<!-- |     |        |       | - Normal : 120          | -->
+<!-- |     |        |       | - Fast : 193            | -->
+<!-- +-----+--------+-------+-------------------------+ -->
+
+<!-- : Summary of subjects and walking speeds used for the model. {#tbl-subjects} -->
+
+
+::: {#tbl-subjects}
+
+```{=latex}
+\begin{longtable}{|p{2cm}|p{2cm}|p{2cm}|p{6cm}|}
+\hline
+    ID & Gender  & Age & Walking speed (cm/s) \\
+    \hhline{=:=:=:=}
+    MBA & M  & 50-60 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 60
+                        \item[-] Intermediate: 116 
+                        \item[-] Preferential: 145
+                        \item[-] Fast: 199
+                       \end{itemize} \\ 
+    \hline
+    MBO & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 73
+                        \item[-] Intermediate: 122
+                        \item[-] Preferential: 145
+                        \item[-] Fast: 188
+                       \end{itemize} \\ 
+    \hline
+    MSI & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 67
+                        \item[-] Intermediate: 115
+                        \item[-] Preferential: 148
+                        \item[-] Fast: 179
+                       \end{itemize} \\ 
+    \hline
+    MTR & M  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 77
+                        \item[-] Preferential: 132
+                        \item[-] Fast: 185
+                       \end{itemize} \\ 
+    \hline
+    NNE & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 57
+                        \item[-] Intermediate: 116 
+                        \item[-] Preferential: 147
+                        \item[-] Fast: 190
+                       \end{itemize} \\ 
+    \hline
+    TDE & M  & 50-60 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
+                        \item[-] Slow: 61
+                        \item[-] Preferential: 120
+                        \item[-] Fast: 193
+                       \end{itemize} \\ 
+    \hline
+\end{longtable}
+```
+
+Summary of subjects and walking speeds used for the model.
+
+:::
+
+
+## Data presentation
+
+TODO: data 
+
+TODO: data preprocessing
 
 ## Feature space
 
