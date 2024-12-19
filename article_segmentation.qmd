@@ -35,6 +35,7 @@ format:
   computo-html: default
   computo-pdf:
     cite-method: biblatex
+    biblatexoptions: "sorting=none"
 tbl-cap-location: bottom
 header-includes:
   - \usepackage{longtable}
@@ -48,11 +49,11 @@ header-includes:
 
 ### Gait analysis
 
-Study of the human gait has been shown to be important in various health applications, such as study of general health in elderly populations. Wearable sensors are increasingly used for gait analysis as they are smaller, cheaper and more convenient than other methods such as motion capture systems or mats containing pressure sensors.
+Study of the human gait has been shown to be important in various health applications, such as study of general health in elderly populations [@beauchet2016poor]. Wearable sensors are increasingly used for gait analysis as they are smaller, cheaper and more convenient than other methods such as motion capture systems or mats containing pressure sensors.
 
-A walking cycle is defined as stride, which is composed of two steps. More formally, a stride is the set of movements performed between two consecutive contacts of the heel of the same foot with the ground. The goal of our method is to segment the gait as cycles to extract strides. This allows further study of the gait, like spatio-temporal parameters computation.
+A walking cycle is defined as a stride, which is composed of two steps. More formally, a stride is the set of movements performed between two consecutive contacts of the heel of the same foot with the ground. The goal of our method is to segment the gait as cycles to extract strides. This allows further study of the gait, like spatio-temporal parameters computation.
 
-More precisely, a stride is divided in two phases: stance phase and swing phase. The stance phase lasts generally 60% of the entire stride. Different events are happening a stride (see @fig-walking-cycle) and we will focus here on Heel-Strike which will be the segmentation marker.
+More precisely, a stride is divided in two phases: the stance phase and the swing phase. The stance phase lasts generally 60% of the entire stride. Different events are happening during a stride (see @fig-walking-cycle) and the focus in this work is the Heel-Strike event which will be the segmentation marker.
 
 ![Events and phases of a typical gait cycle. [^jacquelin-perry]](images/walking-cycles.png){#fig-walking-cycle width=400}
 
@@ -60,7 +61,7 @@ More precisely, a stride is divided in two phases: stance phase and swing phase.
 
 ### Unit quaternions
 
-Unit quaternions can be used to represent the 3D rotation of an object over time [@hamilton1844, @voight2021quaternion]. This representation has several advantages, as it with a rather compressed representation containing only four values and avoiding the gimbal lock problem present in other representations. Unit quaternions were therefore chosen as the data type returned by the sensor.
+Unit quaternions can be used to represent the 3D rotation of an object over time [@hamilton1844;@voight2021quaternion]. This representation has several advantages, as it is a rather compressed representation containing only four values and avoiding the gimbal lock problem presents in other representations. Unit quaternions were therefore chosen as the data type returned by the sensor.
 
 Quaternions are four-dimensional vectors denoted as $\mathbf{q} = \left( q_w, q_x, q_y, q_z \right)$, but can also be viewed as hypercomplex numbers of rank 4. Unit quaternions have a norm of 1 and can encode a 3D rotation with a rotation angle $\theta \in [0, 2\pi]$ and a rotation axis $\mathbf{u} = (u_x, u_y, u_z) \in S^2$, where $S^2$ is the 2-sphere, using the following formula:
 
@@ -73,7 +74,7 @@ with :
 - $i$, $j$, and $k$ generalizing the imaginary number $i$, as $i^2=j^2=k^2=ijk=-1$.
 - $||\mathbf{q}|| = \sqrt{\mathbf{qq}^t} = 1$.
 
-The set of unit quaternions, denoted $\mathbb{H}_u$, possesses interesting properties. The quaternions $\mathbf{q}$ and $-\mathbf{q}$ represent the same rotation. The group is equipped with an identity element $\mathbf{q}^{(0)} = (1,0,0,0)$ which corresponds to the identity rotation, such that $\mathbf{q} \mathbf{q}^{(0)} = \mathbf{q}^{(0)}\mathbf{q} = \mathbf{q}$
+The set of unit quaternions, denoted $\mathbb{H}_u$, possesses interesting properties. The quaternions $\mathbf{q}$ and $-\mathbf{q}$ represent the same rotation. The group is equipped with an identity element $\mathbf{q}^{(0)} = (1,0,0,0)$ which corresponds to the identity rotation, such that $\mathbf{q} \mathbf{q}^{(0)} = \mathbf{q}^{(0)}\mathbf{q} = \mathbf{q}$.
 
 It is possible to use the geodesic distance $d_g$ between two quaternions $\mathbf{q}_1$ and $\mathbf{q}_2$ to define a metric space $(\mathbb{H}_u, d_g)$, with:
 
@@ -81,11 +82,11 @@ $$
 d_g (\mathbf{q}_1, \mathbf{q}_2) = ||\text{log}(\mathbf{q}_1^{-1} \mathbf{q}_2)||
 $$ {#eq-dist-geodesique}
 
-In our case, the sensor orientation is the rotation between the reference frame of origin, here the Earth's reference frame $R_f=(f_1, f_2, f_3)$ and its own reference frame $R_s=(s_1, s_2, s_3)$ formed by the accelerometer, gyroscope, and magnetometer (see @fig-sensor-axis).
+In this application, the sensor orientation is the rotation between the reference frame of origin, here the Earth's reference frame $R_f=(f_1, f_2, f_3)$ and its own reference frame $R_s=(s_1, s_2, s_3)$ formed by the accelerometer, gyroscope, and magnetometer (see @fig-sensor-axis).
 
 ![Sensor reference and axis. [@drouin2023semi]](images/sensor-axis.png){#fig-sensor-axis width=200}
 
-Therefore, the IMU return unit quaternion time-series allowing the study of the 3D hip rotation over time, as four-component vectors.
+Therefore, the IMU returns unit quaternion time-series allowing the study of the 3D hip rotation over time, as four-component vectors.
 
 
 
@@ -123,14 +124,12 @@ In our research, we did not find studies using a decision tree model to segment 
 
 ## Data acquisition
 
-A wearable sensor was used to record the hip rotation. It contains an acceleromerer, a gyroscope and a magnetometer. Subjects were wearing the sensor on their right hip (see @figure-sensor-position). The frequence of the sensor is 100Hz. With this device, the data acquired is in the form of quaternion time-series, representing the 3D rotation of the hip over time.
+A wearable sensor was used to record the hip rotation. It contains an acceleromerer, a gyroscope and a magnetometer. Subjects were wearing the sensor on their right hip (see @fig-sensor-position). The frequence of the sensor is 100Hz. With this device, the data acquired is in the form of quaternion time-series, representing the 3D rotation of the hip over time.
 
 ![Sensor positionned on the right hip.](images/sensor-position.png){#fig-sensor-position width=150}
 
 
-Furthemore, during acquisitions, subjects were walking on the GAITRite© mat, the gold standard in gait analysis. It implies that subject were walking approximately 9 meters. This device gives the times where the subject touch the ground at each step thanks to pressure sensors included in the mat, meaning that these times can be used to know when the Heel-Strike event actually happened, data used to train the model.
-
-To use the two devices simultaneously, they were started at the same time by the same person, allowing a good synchronization between devices.
+Furthemore, during acquisitions, subjects were walking on the GAITRite© mat, the gold standard in gait analysis [@Menz2004]. It implies that subject were walking approximately 9 meters. This device gives the times where the subjects touch the ground at each step thanks to pressure sensors in the mat, meaning that these times can be used to know when the Heel-Strike event actually happened. This data is then used to train the model. To use the two devices simultaneously, they were started at the same time by the same person, allowing a good synchronization between devices.
 
 Six subjects have been included in this study, with different walking speed (see @tbl-subjects). 
 
