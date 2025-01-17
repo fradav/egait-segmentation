@@ -225,11 +225,79 @@ Summary of subjects and walking speeds used for the model.
 
 ## Data presentation
 
-TODO: data 
+Sensor data
 
-TODO: data preprocessing
+: As mentioned before, the sensor returns unit quaternion time-series representing the rotation of the hip over time, allowing visualization of each coordinate time-serie (see @fig-timeserie). It is important to note that on this figure, the walking cycles are clearly apparent and consistent over time, as it represents a healthy gait. This is not the case for subjects having gait disorders, which is why we develop a method more complex than peak detection.
+
+![Data returned by the wearable sensor.](images/time-serie.png){#fig-timeserie width=350}
+
+Sensor data preprocessing 
+
+: A centring step is applied on the quaternion time-series to center them around a mean. Supposing we have $n$ time-series $\mathbf{Q}_1, \dots, \mathbf{Q}_n$ on the same time grid $t_1, \dots, t_p$, we can write $\mathbf{Q}_i(t_k) = \mathbf{q}_{ik} \in \mathbb{H}_u$, with $i \in [\![ 1, n ]\!]$ et $k \in [\![ 1, p ]\!]$. We use the Fréchet mean associated to the geodesic distance $d_g$ (see @eq-dist-geodesique) to compute the mean of each quaternion $\mathbf{q}_{1k}, \dots, \mathbf{q}_{nk}$ for each time $t_k$. 
+
+: $$
+\mathbf{q}_k^{(m)} = \mathbf{Q}^{(m)} (t_k) = \underset{q \in \mathbb{H}_u}{\mathrm{argmin}} \sum_{i=1}^n d_g^2(\mathbf{q}_{ik}, \mathbf{q}), \hspace{5mm} k \in [\![ 1, p ]\!]
+$$ {#eq-mean-qts}
+
+: The centered time-series $\mathbf{Q}_1^{(c)}, \dots, \mathbf{Q}_n^{(c)}$ can then be computed.
+
+: $$
+\mathbf{q}_{ik}^{(c)} = \mathbf{Q}_i^{(c)} (t_k) = \left( \mathbf{q}_k^{(m)} \right)^{-1} \mathbf{q}_{ik}, \hspace{5mm} k \in [\![ 1, p ]\!],\hspace{2mm}  i \in [\![ 1, n ]\!]
+$$ {#eq-centring-qts}
+
+: The other pre-processing step is to switch to a functional representation using cubic splines to be able to compute derivatives [@ramsay2005].
+
+
+Pressure mat data
+
+: The GAITRite© mat returns directly spatio-temporal parameters such as stride duration, stride length or speed. The key parameter in our study is the Heel-Strike exact time. Since the two devices were triggered simultaneously, the same time range is used to associate the Heel-Strike event with a time on the sensor time-series. More precisely, each time of the time-series will be classified between two classes: *Heel-Strike* or *other times*. This method rises a class imbalance challenge that will be adressed later in the article.
+
 
 ## Feature space
+
+To implement a machine learning model, we build a feature space containing variables characterizing the hip rotation over time.
+
+Angular velocity and acceleration
+
+: Supposing we can compute first and second derivatives of a quaternion time-series over time, we can compute angular velocity and acceleration [@narayan2017]. The angular velocity $\pmb{\Omega}$ is a vector which has for direction the axis of rotation and for quantity the angular velocity.
+
+: $$
+\pmb{\Omega} = 2 \mathbf{q}^{-1} \dot{\mathbf{q}} \hspace{3mm} \text{with} \hspace{3mm} \dot{\mathbf{q}} = \frac{d \mathbf{q}}{dt} = \frac{1}{2} \mathbf{q} \hspace{1mm} \pmb{\Omega}
+$$ {#eq-angular-vel}
+
+: Similarly, the angular acceleration $\dot{\pmb{\Omega}}$ is the angular velocity derivative.
+
+: $$
+\dot{\pmb{\Omega}} = 2 \left( \mathbf{q}^{-1} \ddot{\mathbf{q}} - (\mathbf{q}^{-1}\dot{\mathbf{q}})^2 \right) \hspace{3mm} \text{with} \hspace{3mm} \ddot{\mathbf{q}} = \frac{d^2 \mathbf{q}}{dt^2} = \frac{1}{2} \left( \dot{\mathbf{q}} \hspace{1mm}  \pmb{\Omega} + \mathbf{q} \hspace{1mm}  \dot{\pmb{\Omega}} \right)
+$$ {#eq-angular-acc}
+
+Euler angles
+
+: The angles named Roll, Pitch and Yaw represent rotations around the three principal axies. Their computation is done using the quaternion time-series, with the following rotation matrix to go from the quaternion $\mathbf{q} = (q_w, q_x, q_y, q_z)$ to the angles.
+
+$$
+\begin{bmatrix}
+\text{Roll} \\
+\text{Pitch} \\
+\text{Yaw}
+\end{bmatrix}
+= 
+\begin{bmatrix}
+\text{atan2} \left(2(q_w q_x + q_y q_z), 1-2(q_x^2 + q_y^2)  \right) \\
+\text{asin} \left(2(q_w q_y - q_x q_z) \right) \\
+\text{atan2} \left(2(q_w q_z + q_x q_y), 1-2(q_y^2 + q_z^2)  \right)
+\end{bmatrix}
+$$ {#eq-rpy}
+
+
+Walking speed
+
+: One of our hypothesis is that the subject gait can differ depending if the subject walks slowly of faster. Thus this variable was also added to the feature space by getting it from the GAITRite© mat output.
+
+On the other hand, the feature space depends on two hyper-parameters. The first one is a smoothness parameter for the time-serie curves, as derivation is used to compute some variables. The second one is a lag parameter, to keep at the time $t_p$ the informations from the time $t_{p-1}$. That parameter implies that the feature space contains $10 + 9 \times lag$ variables.
+
+Finally, the variable to be predicted contains the two possible classes *Hell-Strike* and *other times* from the GAITRite© mat output. We choose to label a number of points as *Hell-Strike* around the precise event time. This allows to take into account a some uncertainty, as the time range between two points is only 10 ms. By labelling as *Hell-Strike* seven points rather than just one, the event happens in a window of 70 ms. This strategy also reduces the imbalance between the two classes.
+
 
 ## Supervised classification models
 
