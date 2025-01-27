@@ -196,8 +196,10 @@ data.frame(
   ) |> 
   gt::sub_missing() |> 
   gt::opt_stylize(style = 6, color = 'gray') |> 
-  gt::tab_options(
-    column_lab
+  gt::cols_align(align = "center") |> 
+  gt::tab_style(
+    style = "vertical-align:top", 
+    locations = gt::cells_column_labels()
   )
 ```
 
