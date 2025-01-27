@@ -170,52 +170,35 @@ Six subjects have been included in this study, with different walking speed (see
 
 ::: {#tbl-subjects}
 
-```{=latex}
-\begin{longtable}{|p{2cm}|p{2cm}|p{2cm}|p{6cm}|}
-\hline
-    ID & Gender  & Age & Walking speed (cm/s) \\
-    \hhline{=:=:=:=}
-    MBA & M  & 50-60 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 60
-                        \item[-] Intermediate: 116 
-                        \item[-] Preferential: 145
-                        \item[-] Fast: 199
-                       \end{itemize} \\ 
-    \hline
-    MBO & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 73
-                        \item[-] Intermediate: 122
-                        \item[-] Preferential: 145
-                        \item[-] Fast: 188
-                       \end{itemize} \\ 
-    \hline
-    MSI & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 67
-                        \item[-] Intermediate: 115
-                        \item[-] Preferential: 148
-                        \item[-] Fast: 179
-                       \end{itemize} \\ 
-    \hline
-    MTR & M  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 77
-                        \item[-] Preferential: 132
-                        \item[-] Fast: 185
-                       \end{itemize} \\ 
-    \hline
-    NNE & F  & 20-30 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 57
-                        \item[-] Intermediate: 116 
-                        \item[-] Preferential: 147
-                        \item[-] Fast: 190
-                       \end{itemize} \\ 
-    \hline
-    TDE & M  & 50-60 &  \vspace{-0.2cm} \begin{itemize}[itemsep=0mm,, leftmargin=1mm]
-                        \item[-] Slow: 61
-                        \item[-] Preferential: 120
-                        \item[-] Fast: 193
-                       \end{itemize} \\ 
-    \hline
-\end{longtable}
+```{r}
+data.frame(
+  id = c("MBA", "MBO", "MSI", "MTR", "NNE", "TDE"),
+  gender = c("M", "F", "F", "M", "F", "M"),
+  age = c("50-60", "20-30", "20-30", "20-30", "20-30", "50-60"),
+  slow = c(60, 73, 67, 77, 57, 61),
+  intermediate = c(116, 122, 115, NA, 116, NA),
+  preferential = c(145, 145, 148, 132, 147, 120),
+  fast = c(199, 188, 179, 185, 190, 193)
+) |> 
+  gt::gt() |> 
+  gt::tab_spanner(
+    label = "Walking speed (cm/s)",
+    columns = c(slow, intermediate, preferential, fast)
+  ) |> 
+  gt::cols_label(
+    id = "ID",
+    gender = "Gender",
+    age = "Age range (years)",
+    slow = "Slow",
+    intermediate = "Intermediate",
+    preferential = "Preferential",
+    fast = "Fast"
+  ) |> 
+  gt::sub_missing() |> 
+  gt::opt_stylize(style = 6, color = 'gray') |> 
+  gt::tab_options(
+    column_lab
+  )
 ```
 
 Summary of subjects and walking speeds used for the model.

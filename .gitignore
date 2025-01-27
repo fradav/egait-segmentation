@@ -16,3 +16,4 @@ _extensions/
 renv/
 *.html
 *.pdf
+.DS_Store
