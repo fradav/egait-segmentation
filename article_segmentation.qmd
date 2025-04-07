@@ -120,6 +120,12 @@ Other Machine Learning methods
 
 In our research, we did not find studies using a decision tree model to segment the sensor signal into strides.
 
+
+## Methologic contributions
+
+   
+
+
 # Proposed segmentation model
 
 ## Data acquisition
@@ -300,16 +306,27 @@ $${#eq-gini}
 
 : This index is minimal when one of the probabilities tends toward zero, indicating that the node is pure. To build the tree, the model builds splitting nodes by evaluating each splitting point (ie values taken by variables to split observations into groups) to find the one minimizing the Gini index, until a stopping criteria is met.
 
-Bagged trees and Random forest
+Bagged trees and Random forest [@kuhn2013applied]
 
 : A bagged trees model is an ensemble of $M$ decision trees. Each decision tree is built with a boostrap sample of the original data, which is a sample of same size than the original data by selecting random observations with replacement. Then, each of these trees is used to generate a prediction for a new observation. Finally, the observation is classified in the class that has collected the greatest number of votes from the trees.
 
 : A random forest is a quite similar model, also using a number of decision trees. The model also train a tree on a boostrap sample of the original data. The difference is that, at each split, a random subset of the variables is selected to then find the best predictors within this subset. The observations are then classified as usual. The prediction is done the same way as seen before, with each tree voting for a class and selecting the majority to classify the observation.
 
 
-Neural networks
+Neural networks [@varma2018]
 
-: *to do*
+: Neural Networks are deep learning models inspired by the human brain. They consist of interconnected nodes organized in layers which process the data by passing it from one layer to the next. The input data is transformed with non-linear functions, allowing the model to return a classification for each observation as output. The model contains two essential parameters: weights on each connection and biases on each node. It learns data pattern by adjusting these parameters during forward and backward propagation for each observation to mimimize a loss that represents the difference between real and predicted values. Most often, the loss used is the cross-entropy which is defined as followed for the observation $m$:
+
+: $$
+\square(m) = - \sum_{k=1}^K t_k(m) \text{log}(y_k(m))
+$$ {#eq-crossentropy}
+
+: with:
+
+: - $t_k$ the ground truth.
+: - $ny_k$ the classification probability.
+
+: These models are complex and rely on a performant algorithm for the parameter update and an adapted activation function, as well as possible utilisation of batch normalization and regularization to find a model with a good complexity for the data. Tuning is done to find the best hyper-parameters such as the number of layers and nodes and the learning rate.
 
 
 # Tuning and comparing segmentation models
