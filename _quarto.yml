@@ -1,5 +1,7 @@
 project:
-  title: "template-computo-R"
+  title: "article_segmentation"
+  render:
+    - article_segmentation.qmd
 
 
 
