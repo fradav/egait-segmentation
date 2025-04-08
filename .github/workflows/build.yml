@@ -16,6 +16,6 @@ jobs:
   call_quartopublish_workflow:
     permissions:
       id-token: write
-      contents: read
+      pages: write
     uses: computorg/workflows/.github/workflows/publish-render.yml@main
     needs: call_env_workflow
